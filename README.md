@@ -3,6 +3,12 @@
 [![Coverage Status](https://coveralls.io/repos/github/SystemRDL/systemrdl-compiler/badge.svg?branch=main)](https://coveralls.io/github/SystemRDL/systemrdl-compiler?branch=main)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/systemrdl-compiler.svg)](https://pypi.org/project/systemrdl-compiler)
 
+This is a fork of the original project, with the intent of adding experimental (very limited) parametrization support for regblock output.
+All parameters specified by the user (in the regblock sub-commnad) as --keep_params PARA1 PARAM2 ... will retain their symbolic, unresolved value (e.g. 'PARAM1`) instead of being resolved to actual (most commonly - integer) values.
+Support is provided for:
+1. Parametrization of the dimensions of 1D array of registers (MDA - multi-dim - wip). The array dimension size must be an expression containing only the name of the parameter (without any further arithmetic or other operands). 
+1. Parametrization of the reset value of individual fields. Again - expression must be as 1. above.
+
 # SystemRDL Compiler
 
 The `systemrdl-compiler` project implements a generic compiler front-end for

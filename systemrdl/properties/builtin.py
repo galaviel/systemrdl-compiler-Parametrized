@@ -56,7 +56,6 @@ class Prop_dontcompare(PropertyRule):
     valid_types = (int, bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = "O"
 
     def assign_value(self, comp_def: comp.Component, value: Any, src_ref: 'SourceRefBase') -> None:
         super().assign_value(comp_def, value, src_ref)
@@ -76,7 +75,7 @@ class Prop_dontcompare(PropertyRule):
         if isinstance(node, m_node.FieldNode):
             # 5.2.2.1-a: If value is a bit mask, the mask shall have the same width
             # as the field
-            if isinstance(value, int):
+            if not isinstance(value, bool) and isinstance(value, int):
                 if value >= (1 << node.width):
                     self.env.msg.error(
                         "Bit mask (%d) of property 'dontcompare' exceeds width (%d) of field '%s'"
@@ -109,7 +108,7 @@ class Prop_dontcompare(PropertyRule):
 
         else:
             # A boolean may end up cast as an int. Normalize 0 or 1 to boolean
-            if isinstance(value, int) and value in (0, 1):
+            if not isinstance(value, bool) and isinstance(value, int) and value in (0, 1):
                 value = bool(value)
 
             # 5.2.2.1-b: can also be applied to reg, regfile, and addrmap
@@ -139,7 +138,6 @@ class Prop_donttest(PropertyRule):
     valid_types = (int, bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = "O"
 
     def assign_value(self, comp_def: comp.Component, value: Any, src_ref: 'SourceRefBase') -> None:
         super().assign_value(comp_def, value, src_ref)
@@ -157,7 +155,7 @@ class Prop_donttest(PropertyRule):
         if isinstance(node, m_node.FieldNode):
             # 5.2.2.1-a: If value is a bit mask, the mask shall have the same width
             # as the field
-            if isinstance(value, int):
+            if not isinstance(value, bool) and isinstance(value, int):
                 if value >= (1 << node.width):
                     self.env.msg.error(
                         "Bit mask (%d) of property 'donttest' exceeds width (%d) of field '%s'"
@@ -166,7 +164,7 @@ class Prop_donttest(PropertyRule):
                     )
         else:
             # A boolean may end up cast as an int. Normalize 0 or 1 to boolean
-            if isinstance(value, int) and value in (0, 1):
+            if not isinstance(value, bool) and isinstance(value, int) and value in (0, 1):
                 value = bool(value)
 
             # 5.2.2.1-b: can also be applied to reg, regfile, and addrmap
@@ -189,7 +187,6 @@ class Prop_ispresent(PropertyRule):
     valid_types = (bool,)
     default = True
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_errextbus(PropertyRule):
@@ -197,7 +194,6 @@ class Prop_errextbus(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = False
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         # 10.6.1-h: errextbus is only valid for external registers
@@ -214,7 +210,6 @@ class Prop_hdl_path(PropertyRule):
     valid_types = (str,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_hdl_path_gate(PropertyRule):
@@ -222,7 +217,6 @@ class Prop_hdl_path_gate(PropertyRule):
     valid_types = (str,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_hdl_path_gate_slice(PropertyRule):
@@ -230,7 +224,6 @@ class Prop_hdl_path_gate_slice(PropertyRule):
     valid_types = (rdltypes.ArrayPlaceholder(str),)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_hdl_path_slice(PropertyRule):
@@ -238,7 +231,6 @@ class Prop_hdl_path_slice(PropertyRule):
     valid_types = (rdltypes.ArrayPlaceholder(str),)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 #===============================================================================
@@ -254,7 +246,6 @@ class Prop_signalwidth(PropertyRule):
     valid_types = (int,)
     default = None
     dyn_assign_allowed = False
-    mutex_group = None
 
     def get_default(self, node: m_node.Node) -> Optional[int]:
         """
@@ -303,7 +294,6 @@ class Prop_cpuif_reset(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         if value is True:
@@ -326,7 +316,6 @@ class Prop_field_reset(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         if value is True:
@@ -377,7 +366,6 @@ class Prop_hw(PropertyRule):
     valid_types = (rdltypes.AccessType,)
     default = rdltypes.AccessType.rw
     dyn_assign_allowed = False
-    mutex_group = None
 
 
 class Prop_sw(PropertyRule):
@@ -389,7 +377,6 @@ class Prop_sw(PropertyRule):
     valid_types = (rdltypes.AccessType,)
     default = rdltypes.AccessType.rw
     dyn_assign_allowed = True
-    mutex_group = None
 
 #-------------------------------------------------------------------------------
 # Hardware Signal Properties
@@ -403,7 +390,6 @@ class Prop_next(PropertyRule):
     valid_types = (comp.Field, comp.Signal, rdltypes.PropertyReference,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         assert isinstance(node, m_node.FieldNode)
@@ -442,7 +428,6 @@ class Prop_reset(PropertyRule):
     valid_types = (int, comp.Field, comp.Signal, rdltypes.PropertyReference,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         assert isinstance(node, m_node.FieldNode)
@@ -483,7 +468,6 @@ class Prop_resetsignal(PropertyRule):
     valid_types = (comp.Signal,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         assert isinstance(value, m_node.SignalNode)
@@ -732,7 +716,7 @@ def _validate_swwe_writable(env: "RDLEnvironment", node: m_node.Node, prop_name:
     # the user.
     this_f_sw = node.get_property('sw')
 
-    if isinstance(prop_value, rdltypes.ComponentRef):
+    if isinstance(prop_value, m_node.Node):
         shall_be_writable = True
     elif prop_value is True:
         shall_be_writable = True
@@ -800,7 +784,6 @@ class Prop_swmod(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_swacc(PropertyRule):
@@ -813,7 +796,6 @@ class Prop_swacc(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_singlepulse(PropertyRule):
@@ -828,7 +810,6 @@ class Prop_singlepulse(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         assert isinstance(node, m_node.FieldNode)
@@ -887,7 +868,7 @@ class Prop_we(PropertyRule):
         self._validate_ref_width_is_1(node, value)
         self._validate_ref_is_present(node, value)
 
-        if isinstance(value, comp.VectorComponent):
+        if isinstance(value, (m_node.FieldNode, rdltypes.PropertyReference)):
             uses_we = True
         else:
             # value is boolean
@@ -920,7 +901,7 @@ class Prop_wel(PropertyRule):
         self._validate_ref_width_is_1(node, value)
         self._validate_ref_is_present(node, value)
 
-        if isinstance(value, comp.VectorComponent):
+        if isinstance(value, (m_node.FieldNode, rdltypes.PropertyReference)):
             uses_we = True
         else:
             # value is boolean
@@ -946,7 +927,6 @@ class Prop_anded(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_ored(PropertyRule):
@@ -954,7 +934,6 @@ class Prop_ored(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_xored(PropertyRule):
@@ -962,7 +941,6 @@ class Prop_xored(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class Prop_fieldwidth(PropertyRule):
@@ -970,7 +948,6 @@ class Prop_fieldwidth(PropertyRule):
     valid_types = (int,)
     default = None
     dyn_assign_allowed = False
-    mutex_group = None
 
     def get_default(self, node: m_node.Node) -> Optional[int]:
         """
@@ -985,7 +962,6 @@ class Prop_hwclr(PropertyRule):
     valid_types = (bool, comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         self._validate_ref_width_is_1(node, value)
@@ -997,7 +973,6 @@ class Prop_hwset(PropertyRule):
     valid_types = (bool, comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         self._validate_ref_width_is_1(node, value)
@@ -1148,7 +1123,6 @@ class Prop_overflow(CounterProperty):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1166,7 +1140,6 @@ class Prop_underflow(CounterProperty):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1184,7 +1157,6 @@ class Prop_incr(CounterProperty):
     valid_types = (comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1208,6 +1180,7 @@ class Prop_incrvalue(CounterProperty):
 
     def get_default(self, node: m_node.Node) -> Any:
         assert isinstance(node, m_node.FieldNode)
+
         if node.is_up_counter and node.get_property('incrwidth') is None:
             # Is counter, but no alternatives to increment value were specified.
             return 1
@@ -1261,7 +1234,6 @@ class Prop_decr(CounterProperty):
     valid_types = (comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1294,7 +1266,6 @@ class Prop_decrsaturate(CounterProperty):
     valid_types = (int, bool, comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1308,7 +1279,6 @@ class Prop_decrthreshold(PropertyRule):
     valid_types = (int, bool, comp.Signal, comp.Field, rdltypes.PropertyReference,)
     default = False
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         super().validate(node, value)
@@ -1333,7 +1303,6 @@ class Prop_intr_type(PropertyRule):
     valid_types = (rdltypes.InterruptType,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     @classmethod
     def get_name_cls(cls) -> str:
@@ -1361,12 +1330,11 @@ class Prop_enable(PropertyRule):
         self._validate_ref_width(node, value)
         self._validate_ref_is_present(node, value)
 
-        if value:
-            if not node.get_property('intr'):
-                self.env.msg.error(
-                    "The 'enable' property can only be used on interrupt fields.",
-                    self.get_src_ref(node)
-                )
+        if not node.get_property('intr'):
+            self.env.msg.error(
+                "The 'enable' property can only be used on interrupt fields.",
+                self.get_src_ref(node)
+            )
 
 
 class Prop_mask(PropertyRule):
@@ -1381,12 +1349,11 @@ class Prop_mask(PropertyRule):
         self._validate_ref_width(node, value)
         self._validate_ref_is_present(node, value)
 
-        if value:
-            if not node.get_property('intr'):
-                self.env.msg.error(
-                    "The 'mask' property can only be used on interrupt fields.",
-                    self.get_src_ref(node)
-                )
+        if not node.get_property('intr'):
+            self.env.msg.error(
+                "The 'mask' property can only be used on interrupt fields.",
+                self.get_src_ref(node)
+            )
 
 
 class Prop_haltenable(PropertyRule):
@@ -1401,12 +1368,11 @@ class Prop_haltenable(PropertyRule):
         self._validate_ref_width(node, value)
         self._validate_ref_is_present(node, value)
 
-        if value:
-            if not node.get_property('intr'):
-                self.env.msg.error(
-                    "The 'haltenable' property can only be used on interrupt fields.",
-                    self.get_src_ref(node)
-                )
+        if not node.get_property('intr'):
+            self.env.msg.error(
+                "The 'haltenable' property can only be used on interrupt fields.",
+                self.get_src_ref(node)
+            )
 
 
 class Prop_haltmask(PropertyRule):
@@ -1421,12 +1387,11 @@ class Prop_haltmask(PropertyRule):
         self._validate_ref_width(node, value)
         self._validate_ref_is_present(node, value)
 
-        if value:
-            if not node.get_property('intr'):
-                self.env.msg.error(
-                    "The 'haltmask' property can only be used on interrupt fields.",
-                    self.get_src_ref(node)
-                )
+        if not node.get_property('intr'):
+            self.env.msg.error(
+                "The 'haltmask' property can only be used on interrupt fields.",
+                self.get_src_ref(node)
+            )
 
 
 class Prop_sticky(PropertyRule):
@@ -1477,8 +1442,6 @@ class Prop_sticky(PropertyRule):
                     "Sticky fields shall be hardware-writable",
                     self.get_src_ref(node)
                 )
-
-
 
 
 class Prop_stickybit(PropertyRule):
@@ -1539,7 +1502,6 @@ class Prop_encode(PropertyRule):
     valid_types = (rdltypes.UserEnum,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         assert isinstance(node, m_node.FieldNode)
@@ -1558,7 +1520,6 @@ class Prop_precedence(PropertyRule):
     valid_types = (rdltypes.PrecedenceType,)
     default = rdltypes.PrecedenceType.sw
     dyn_assign_allowed = True
-    mutex_group = None
 
 
 class Prop_paritycheck(PropertyRule):
@@ -1580,7 +1541,6 @@ class Prop_regwidth(PropertyRule):
     valid_types = (int,)
     default = 32
     dyn_assign_allowed = False
-    mutex_group = None
 
 
 class Prop_accesswidth(PropertyRule):
@@ -1592,7 +1552,6 @@ class Prop_accesswidth(PropertyRule):
     valid_types = (int,)
     default = None
     dyn_assign_allowed = True
-    mutex_group = None
 
     def get_default(self, node: m_node.Node) -> int:
         """
@@ -1617,7 +1576,6 @@ class Prop_shared(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = False
-    mutex_group = None
 
 #===============================================================================
 # Mem Properties
@@ -1628,7 +1586,6 @@ class Prop_mementries(PropertyRule):
     valid_types = (int,)
     default = 1
     dyn_assign_allowed = False
-    mutex_group = None
 
 
 class Prop_memwidth(PropertyRule):
@@ -1636,7 +1593,6 @@ class Prop_memwidth(PropertyRule):
     valid_types = (int,)
     default = 32
     dyn_assign_allowed = False
-    mutex_group = None
 
 #===============================================================================
 # Register file properties
@@ -1647,7 +1603,6 @@ class Prop_alignment(PropertyRule):
     valid_types = (int,)
     default = None
     dyn_assign_allowed = False
-    mutex_group = None
 
     # RDL spec claims that if unspecified, the default alignment is based on
     # the registers width.
@@ -1663,7 +1618,6 @@ class Prop_sharedextbus(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = False
-    mutex_group = None
 
 #===============================================================================
 # Address map properties
@@ -1694,7 +1648,6 @@ class Prop_addressing(PropertyRule):
     valid_types = (rdltypes.AddressingType,)
     default = rdltypes.AddressingType.regalign
     dyn_assign_allowed = False
-    mutex_group = None
 
 
 class Prop_rsvdset(PropertyRule):
@@ -1742,7 +1695,6 @@ class Prop_bridge(PropertyRule):
     valid_types = (bool,)
     default = False
     dyn_assign_allowed = False
-    mutex_group = None
 
     def validate(self, node: m_node.Node, value: Any) -> None:
         # 13.5: Bridge can only be applied to the root address map

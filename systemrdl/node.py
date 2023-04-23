@@ -8,6 +8,7 @@ from . import component as comp
 from . import rdltypes
 from .core import rdlformatcode, helpers
 
+
 if TYPE_CHECKING:
     from .compiler import RDLEnvironment
     from markdown import Markdown
@@ -744,10 +745,13 @@ class AddressableNode(Node):
         # Extends get_path_segment() in order to append any array suffixes
         path_segment = super().get_path_segment(array_suffix, empty_array_suffix)
 
+        from systemrdl.ast import ParameterRef  # galaviel TODO try moving this to the beginning of the file..
         if self.is_array:
             if self.current_idx is None:
                 # Index is not known.
                 for dim in self.array_dimensions:
+                    if isinstance(dim, ParameterRef):
+                        dim = dim.param.name
                     path_segment += empty_array_suffix.format(dim=dim)
                 return path_segment
             else:
@@ -903,7 +907,11 @@ class AddressableNode(Node):
             # However this opens up a whole slew of ugly corner cases that the
             # spec designers may not have anticipated.
             # Using a simplified calculation for now until someone actually cares
-            return self.array_stride * self.inst.n_elements
+            from systemrdl.ast import ParameterRef
+            if isinstance(self.inst.n_elements, ParameterRef):  # galaviel if array size is parametrized, don't know yet, return 1 for now TODO
+                return self.array_stride * 1                    # This seems to work
+            else:
+                return self.array_stride * self.inst.n_elements
 
         else:
             return self.size

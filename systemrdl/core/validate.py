@@ -6,6 +6,8 @@ from .. import rdltypes
 from ..node import Node, AddressableNode, SignalNode
 from ..node import AddrmapNode, RegfileNode, MemNode, RegNode, FieldNode
 
+from systemrdl.ast.references import ParameterRef  # galaviel
+
 if TYPE_CHECKING:
     from ..compiler import RDLEnvironment
 
@@ -41,7 +43,16 @@ class ValidateListener(walker.RDLListener):
                 prop_value._validate()
 
             prop_rule = self.env.property_rules.lookup_property(prop_name)
-            prop_rule.validate(node, prop_value)
+
+            # galaviel
+            if ( prop_name == "reset" ):
+                if ( isinstance(prop_value, ParameterRef) ):
+                    print("Skip validate for prop_value=%s instance=%s because it's a ParameterRef" % (prop_name, node.inst_name))
+                else:
+                    prop_rule.validate(node, prop_value)
+            else:
+                prop_rule.validate(node, prop_value)
+                
 
         if not isinstance(node, SignalNode):
             self.has_cpuif_reset_stack.append(False)

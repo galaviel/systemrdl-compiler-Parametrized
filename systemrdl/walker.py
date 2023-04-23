@@ -145,12 +145,14 @@ class RDLWalker:
             Added ``skip_top`` option.
         """
 
+        # galaviel **ENTER PARENT**
         if not skip_top:
             for listener in listeners:
                 self.current_action = self.do_enter(node, listener)
                 if self.current_action == WalkerAction.StopNow:
                     return
 
+        # galaviel **CHILDREN
         if self.current_action == WalkerAction.SkipDescendants:
             # skip recursion into children, then reset action
             self.current_action = WalkerAction.Continue
@@ -160,6 +162,7 @@ class RDLWalker:
                 if self.current_action == WalkerAction.StopNow:
                     return
 
+        # galaviel **EXIT PARENT**
         if not skip_top:
             for listener in listeners:
                 self.current_action = self.do_exit(node, listener)

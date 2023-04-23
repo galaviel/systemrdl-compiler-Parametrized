@@ -10,6 +10,7 @@ from .. import walker
 from .. import rdltypes
 from ..node import AddressableNode, RootNode, VectorNode, FieldNode, RegNode, RegfileNode
 from ..node import AddrmapNode, MemNode, SignalNode, Node
+from systemrdl.ast.references import ParameterRef
 
 if TYPE_CHECKING:
     from ..messages import MessageHandler
@@ -39,8 +40,15 @@ class ElabExpressionsListener(walker.RDLListener):
         # Evaluate component properties
         for prop_name, prop_value in node.inst.properties.items():
             if isinstance(prop_value, ASTNode):
-                node.inst.properties[prop_name] = prop_value.get_value()
-
+                
+                # galaviel - special treatment for reset. If it's already an integer, keep it, else
+                # keep the symbolic AST representation, don't do get_value()
+                if ( prop_name == "reset" and isinstance(prop_value.v, ParameterRef) ):
+                    node.inst.properties[prop_name] = prop_value.v
+                else:
+                    node.inst.properties[prop_name] = prop_value.get_value()            
+                
+                                                
 
     def enter_AddressableComponent(self, node: AddressableNode) -> None:
         assert isinstance(node.inst, comp.AddressableComponent)
@@ -59,7 +67,11 @@ class ElabExpressionsListener(walker.RDLListener):
         if node.inst.array_dimensions:
             for i, dim in enumerate(node.inst.array_dimensions):
                 if isinstance(dim, ASTNode):
-                    node.inst.array_dimensions[i] = dim.get_value()
+                    # galaviel if array dim is parameter, don't resolve it, keep symbolic
+                    if ( isinstance(dim.v, ParameterRef) ):
+                        node.inst.array_dimensions[i] = dim.v
+                    else: 
+                        node.inst.array_dimensions[i] = dim.get_value()     # galaviel looks like this is the place where replacement happens (array size param to actual value)
                     if node.inst.array_dimensions[i] == 0:
                         self.msg.fatal(
                             "Array dimension must be greater than zero",

@@ -387,6 +387,7 @@ class RDLCompiler:
         root_node = RootNode(root_inst, self.env, None)
 
         # Resolve all expressions
+        # galaviel this is (it seems) where Array size and reset default value get their value (change/get resolved from e.g. param to int)
         walker.RDLWalker(skip_not_present=False).walk(
             root_node,
             ElabExpressionsListener(self.msg)

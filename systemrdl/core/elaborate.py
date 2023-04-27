@@ -44,8 +44,15 @@ class ElabExpressionsListener(walker.RDLListener):
                 
                 # galaviel - special treatment for reset. If it's already an integer, keep it, else
                 # keep the symbolic AST representation, don't do get_value()
-                if ( prop_name == "reset" and isinstance(prop_value.v, ParameterRef) ):
-                    node.inst.properties[prop_name] = prop_value.v
+                if ( prop_name == "reset" ):
+                    # galaviel 'prop_value' is different if reset value assigned as propetry i.e. field { ... reset = 0x1 } 
+                    # or field {...} = 0x1. Different object.
+                    if isinstance(prop_value, ParameterRef):
+                        node.inst.properties[prop_name] = prop_value
+                    elif ( hasattr(prop_value, "v") and isinstance(prop_value.v, ParameterRef) ):
+                        node.inst.properties[prop_name] = prop_value.v
+                    else:
+                        node.inst.properties[prop_name] = prop_value.get_value()
                 else:
                     node.inst.properties[prop_name] = prop_value.get_value()
                     

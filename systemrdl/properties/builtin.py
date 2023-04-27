@@ -433,12 +433,18 @@ class Prop_reset(PropertyRule):
         assert isinstance(node, m_node.FieldNode)
         if isinstance(value, int):
             # 9.5.1-c: The reset value cannot be larger than can fit in the field
-            if value >= (1 << node.width):
-                self.env.msg.error(
-                    "The reset value (%d) of field '%s' cannot fit within its width (%d)"
-                    % (value, node.inst_name, node.width),
-                    self.get_src_ref(node)
+            if isinstance(node.width, str): # galaviel skip verify for field reset value if msb/lsb are symbolic..
+                self.env.msg.info(
+                    "Field '%s' Skip reset value validation because either msb or lsb are symbolic (parameter)"
+                    % (node.inst_name)
                 )
+            else:
+                if value >= (1 << node.width):
+                    self.env.msg.error(
+                        "The reset value (%d) of field '%s' cannot fit within its width (%d)"
+                        % (value, node.inst_name, node.width),
+                        self.get_src_ref(node)
+                    )
         elif isinstance(value, m_node.FieldNode):
             # 9.5.1-e: reset cannot be self-referencing
             if node.get_path() == value.get_path():

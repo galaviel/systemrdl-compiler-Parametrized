@@ -45,9 +45,9 @@ class ValidateListener(walker.RDLListener):
             prop_rule = self.env.property_rules.lookup_property(prop_name)
 
             # galaviel
-            if ( prop_name == "reset" ):
+            if ( prop_name == "reset" or prop_name == "width" ):
                 if ( isinstance(prop_value, ParameterRef) ):
-                    print("Skip validate for prop_value=%s instance=%s because it's a ParameterRef" % (prop_name, node.inst_name))
+                    print("Skip validate for prop_name=%s prop_value=%s instance=%s because it's a ParameterRef" % (prop_name, prop_value, node.inst_name))
                 else:
                     prop_rule.validate(node, prop_value)
             else:
@@ -399,7 +399,12 @@ class ValidateListener(walker.RDLListener):
 
         # 10.1-e: Field instances shall not occupy a bit position exceeding the
         # MSB of the register
-        if node.high >= parent_regwidth:
+        # galaviel skip of node.high is ParameterRef
+        if isinstance(node.high, ParameterRef):
+            self.msg.info(
+                "High bit (%s) of field '%s' is symbolic; not checking it it exceeds MSb of parent register"
+                % (node.high.param.name, node.inst_name))
+        elif node.high >= parent_regwidth:
             self.msg.error(
                 "High bit (%d) of field '%s' exceeds MSb of parent register"
                 % (node.high, node.inst_name),

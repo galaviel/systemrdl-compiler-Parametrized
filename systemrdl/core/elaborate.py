@@ -32,8 +32,9 @@ class ElabExpressionsListener(walker.RDLListener):
     Also elaborates parameterized component type names
     """
 
-    def __init__(self, msg_handler: 'MessageHandler'):
+    def __init__(self, msg_handler: 'MessageHandler', options: 'argparse.Namespace'):
         self.msg = msg_handler
+        self.options = options
 
 
     def enter_Component(self, node: Node) -> None:
@@ -46,7 +47,8 @@ class ElabExpressionsListener(walker.RDLListener):
                 if ( prop_name == "reset" and isinstance(prop_value.v, ParameterRef) ):
                     node.inst.properties[prop_name] = prop_value.v
                 else:
-                    node.inst.properties[prop_name] = prop_value.get_value()            
+                    node.inst.properties[prop_name] = prop_value.get_value()
+                    
                 
                                                 
 
@@ -99,10 +101,16 @@ class ElabExpressionsListener(walker.RDLListener):
                 )
 
         if isinstance(node.inst.msb, ASTNode):
-            node.inst.msb = node.inst.msb.get_value()
+            if isinstance(node.inst.msb.v, ParameterRef) and node.inst.msb.v.param.name in self.options.keep_params: 
+                node.inst.msb = node.inst.msb.v
+            else:
+                node.inst.msb = node.inst.msb.get_value()
 
         if isinstance(node.inst.lsb, ASTNode):
-            node.inst.lsb = node.inst.lsb.get_value()
+            if isinstance(node.inst.lsb.v, ParameterRef) and node.inst.lsb.v.param.name in self.options.keep_params: 
+                node.inst.lsb = node.inst.lsb.v
+            else:
+                node.inst.lsb = node.inst.lsb.get_value()
 
 
 
@@ -268,8 +276,20 @@ class StructuralPlacementListener(walker.RDLListener):
             fieldwidth = node.get_property('fieldwidth')
 
             if (node.inst.lsb is not None) and (node.inst.msb is not None):
-                width = abs(node.inst.msb - node.inst.lsb) + 1
-
+                # if either msb/lsb is symbolic, need to keep as string, can't resolve to int
+                if isinstance(node.inst.lsb, ParameterRef) :
+                    lsb_str = node.inst.msb.param.name
+                else:
+                    lsb_str = node.inst.lsb
+                if isinstance(node.inst.msb, ParameterRef):
+                    msb_str = node.inst.msb.param.name
+                else:
+                    msb_str = node.inst.msb
+                
+                if isinstance(node.inst.lsb, ParameterRef) or isinstance(node.inst.msb, ParameterRef):    
+                    width = "%s - %s + 1" % (msb_str, lsb_str)  # TODO consolidate (like I did in addr offsets) otherwise we get [PARAM+1-1+0:0] whcih is legal but not pretty
+                else:
+                    width = abs(node.inst.msb - node.inst.lsb) + 1
                 node.inst.width = width
             elif fieldwidth is not None:
                 node.inst.width = fieldwidth
@@ -331,6 +351,10 @@ class StructuralPlacementListener(walker.RDLListener):
 
             if (inst.lsb is None) or (inst.msb is None):
                 continue
+            
+            # msb or lsb is symbolic - cannot decide
+            if (isinstance(inst.lsb, ParameterRef) or isinstance(inst.msb, ParameterRef)):
+                continue
 
             if inst.msb > inst.lsb:
                 # bit ordering is [high:low]. Implies lsb mode
@@ -363,9 +387,16 @@ class StructuralPlacementListener(walker.RDLListener):
         for inst in node.inst.children:
             if not isinstance(inst, comp.Field):
                 continue
-
+            
+            # galaviel prosvisory , if symbolic, lets decide it's [msb:lsb] (only this is supported currently)
+            if isinstance(inst.lsb, ParameterRef) or isinstance(inst.msb, ParameterRef):
+                inst.high = inst.msb
+                inst.low  = inst.lsb
+                prev_inst = inst
+                continue
+            
             if (inst.lsb is None) or (inst.msb is None):
-                # Offset is not known
+                
 
                 if node.env.chk_implicit_field_pos:
                     node.env.msg.message(

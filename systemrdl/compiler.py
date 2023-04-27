@@ -279,7 +279,7 @@ class RDLCompiler:
         return FileInfo(input_stream.strdata, included_files)
 
 
-    def elaborate(self, top_def_name: Optional[str]=None, inst_name: Optional[str]=None, parameters: Optional[Dict[str, 'RDLValue']]=None) -> RootNode:
+    def elaborate(self, options: 'argparse.Namespace', top_def_name: Optional[str]=None, inst_name: Optional[str]=None, parameters: Optional[Dict[str, 'RDLValue']]=None) -> RootNode:
         """
         Elaborates the design for the given top-level addrmap component.
 
@@ -391,7 +391,7 @@ class RDLCompiler:
         # galaviel this is (it seems) where Array size and reset default value get their value (change/get resolved from e.g. param to int)
         walker.RDLWalker(skip_not_present=False).walk(
             root_node,
-            ElabExpressionsListener(self.msg)
+            ElabExpressionsListener(self.msg, options)
         )
 
         # Resolve address and field placement

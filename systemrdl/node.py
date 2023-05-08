@@ -242,6 +242,28 @@ class Node:
             if isinstance(child, RegNode):
                 yield child
 
+    def regfiles(self, unroll: bool=False, skip_not_present: bool=True) -> Iterator['RegfileNode']:
+        """
+        Returns an iterator that provides nodes for all immediate registers of
+        this component.
+
+        Parameters
+        ----------
+        unroll : bool
+            If True, any children that are arrays are unrolled.
+
+        skip_not_present : bool
+            If True, skips children whose 'ispresent' property is set to False
+
+        Yields
+        ------
+        :class:`~RegfileNode`
+            All registers in this component
+        """
+        for child in self.children(unroll, skip_not_present):
+            if isinstance(child, RegfileNode):
+                yield child
+
 
     @property
     def owning_addrmap(self) -> Optional['AddrmapNode']:
@@ -1080,6 +1102,22 @@ class FieldNode(VectorNode):
         return hw in (rdltypes.AccessType.rw, rdltypes.AccessType.rw1,
                         rdltypes.AccessType.r)
 
+
+    @property
+    def implements_parity(self) -> bool:
+        """
+        True if the field needs parity check implemented, which is in case it implements storage + 
+        paritycheck was not disabled for this field.
+        galaivel: this method was copied from implements_storage(self) and adapted. (as the name 
+        implies).
+        """
+        paritycheck = self.get_property('paritycheck')
+        
+        if self.implements_storage and paritycheck:
+            return True
+        return False
+
+
     @property
     def implements_storage(self) -> bool:
         """
@@ -1147,6 +1185,8 @@ class FieldNode(VectorNode):
             return True
 
         return False
+    
+    
 
     @property
     def is_up_counter(self) -> bool:
@@ -1439,6 +1479,16 @@ class RegNode(AddressableNode):
 
             yield alias_reg
 
+    @property
+    def implements_parity(self) -> bool:
+        """
+        Propagate upwards.. if any field in the addrmap implements parity, addrmap needs to have a 'parity_error' output port.
+        """
+        for field in self.fields(skip_not_present=True):
+            if field.implements_parity:
+                return True
+        return False
+
 
 
 
@@ -1448,6 +1498,17 @@ class RegfileNode(AddressableNode):
     @property
     def size(self) -> int:
         return get_group_node_size(self)
+    
+    @property
+    def implements_parity(self) -> bool:
+        """
+        Propagate upwards.. if any field in the addrmap implements parity, addrmap needs to have a 'parity_error' output port.
+        """
+        for reg in self.registers(unroll=False, skip_not_present=True):
+            if reg.implements_parity:
+                return True
+        return False
+    
 
 #===============================================================================
 class AddrmapNode(AddressableNode):
@@ -1455,6 +1516,17 @@ class AddrmapNode(AddressableNode):
     @property
     def size(self) -> int:
         return get_group_node_size(self)
+    
+    @property
+    def implements_parity(self) -> bool:
+        """
+        Propagate upwards.. if any field in the addrmap implements parity, addrmap needs to have a 'parity_error' output port.
+        """
+        for regfile in self.regfiles(unroll=False, skip_not_present=True):
+            if regfile.implements_parity:
+                return True
+        return False
+    
 
 #===============================================================================
 class MemNode(AddressableNode):
